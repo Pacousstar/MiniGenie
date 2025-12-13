@@ -1,0 +1,30 @@
+{
+  "name": "minigenie",
+  "version": "1.0.0",
+  "description": "Application éducative intelligente pour enfants 3-8 ans",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:mobile": "cd apps/mobile && npm start",
+    "dev:web": "cd apps/web && npm run dev",
+    "dev:all": "concurrently \"npm run dev:mobile\" \"npm run dev:web\"",
+    "build:mobile": "cd apps/mobile && npm run build",
+    "build:web": "cd apps/web && npm run build",
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.55.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
+
