@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, MODULES, ASSENA_MESSAGES } from '@minigenie/shared';
 import * as Speech from 'expo-speech';
+import AlphabetModule from '../components/modules/AlphabetModule';
 
 /**
  * Écran de module pédagogique
@@ -16,43 +18,51 @@ import * as Speech from 'expo-speech';
 export default function ModuleScreen() {
   const router = useRouter();
   const { module } = useLocalSearchParams<{ module: string }>();
-  const moduleData = module ? MODULES[module] : null;
+  const [currentModule, setCurrentModule] = useState<string | null>(null);
 
   useEffect(() => {
-    if (moduleData) {
-      Speech.speak(
-        `Super ! Tu as choisi le module ${moduleData.title}. C'est parti !`,
-        { language: 'fr-FR', pitch: 1.2, rate: 0.9 }
+    if (module) {
+      setCurrentModule(module);
+    }
+  }, [module]);
+
+  const handleBack = () => {
+    router.back();
+  };
+
+  // Rendu du module spécifique
+  const renderModule = () => {
+    if (!currentModule) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Choisis un module pour commencer !</Text>
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <Text style={styles.backButtonText}>Retour</Text>
+          </TouchableOpacity>
+        </View>
       );
     }
-  }, [moduleData]);
 
-  if (!moduleData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>Module non trouvé</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text>Retour</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+    switch (currentModule) {
+      case 'alphabet':
+        return <AlphabetModule onComplete={handleBack} />;
+      default:
+        return (
+          <View style={styles.comingSoonContainer}>
+            <Text style={styles.comingSoonText}>
+              Le module "{MODULES[currentModule]?.title || currentModule}" arrive bientôt !
+            </Text>
+            <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+              <Text style={styles.backButtonText}>Retour</Text>
+            </TouchableOpacity>
+          </View>
+        );
+    }
+  };
 
-  // Pour l'instant, affichage simple - À développer selon le module
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.moduleIcon}>{moduleData.icon}</Text>
-        <Text style={styles.moduleTitle}>{moduleData.title}</Text>
-        <Text style={styles.comingSoon}>Module en développement...</Text>
-        
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => router.back()}
-        >
-          <Text style={styles.backButtonText}>Retour à l'accueil</Text>
-        </TouchableOpacity>
-      </View>
+      {renderModule()}
     </SafeAreaView>
   );
 }
@@ -62,39 +72,36 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background.light,
   },
-  content: {
+  emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
-  moduleIcon: {
-    fontSize: 80,
-    marginBottom: 20,
-  },
-  moduleTitle: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: COLORS.primary.orange,
-    marginBottom: 20,
-  },
-  comingSoon: {
-    fontSize: 18,
+  emptyText: {
+    fontSize: 20,
     color: COLORS.text.medium,
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 30,
   },
-  errorText: {
-    fontSize: 18,
-    color: COLORS.primary.red,
+  comingSoonContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  comingSoonText: {
+    fontSize: 22,
+    color: COLORS.text.dark,
     textAlign: 'center',
+    marginBottom: 30,
+    fontWeight: '600',
   },
   backButton: {
     backgroundColor: COLORS.primary.green,
     borderRadius: 12,
     padding: 16,
-    minWidth: 200,
-    alignItems: 'center',
+    paddingHorizontal: 32,
   },
   backButtonText: {
     color: COLORS.primary.white,
@@ -102,4 +109,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

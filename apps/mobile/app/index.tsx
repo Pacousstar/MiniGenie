@@ -34,10 +34,29 @@ export default function SplashScreen() {
       }),
     ]).start();
 
-    // Redirection après 2.5 secondes
-    const timer = setTimeout(() => {
-      router.replace('/home');
-    }, 2500);
+    // Vérifier si un profil existe
+    const checkProfile = async () => {
+      try {
+        const { getChildProfile } = await import('@minigenie/shared/src/utils/storage');
+        const profile = await getChildProfile();
+        
+        // Redirection après 2.5 secondes
+        setTimeout(() => {
+          if (profile) {
+            router.replace('/home');
+          } else {
+            router.replace('/profile');
+          }
+        }, 2500);
+      } catch (error) {
+        // En cas d'erreur, rediriger vers le profil
+        setTimeout(() => {
+          router.replace('/profile');
+        }, 2500);
+      }
+    };
+    
+    checkProfile();
 
     return () => clearTimeout(timer);
   }, []);
