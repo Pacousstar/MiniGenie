@@ -1,0 +1,26 @@
+# Configuration de l'Agent IA
+
+## Permissions activées
+
+- **AI Agent**: Activé
+- **Allow Agent to edit files**: Activé - L'agent peut modifier les fichiers du projet
+- **Allow Agent to run commands**: Activé - L'agent peut exécuter des commandes terminal selon les besoins
+
+## AI Autocomplete activé
+
+- **Inline suggestions**: Activé - Suggestions affichées directement dans le code
+- **Ghost completions**: Activé - Completions fantômes pour prévisualiser les suggestions
+- **Autocomplete while typing**: Activé - Autocomplétion automatique pendant la frappe
+
+## Préférences
+
+L'agent IA a la permission de :
+- Lire et modifier tous les fichiers du projet
+- Exécuter des commandes terminal pour installer des dépendances, lancer des tests, etc.
+- Créer et supprimer des fichiers selon les besoins du développement
+
+L'autocomplétion IA est configurée pour :
+- Afficher des suggestions en ligne pendant que vous codez
+- Montrer des complétions fantômes pour prévisualiser les suggestions
+- Proposer automatiquement des complétions pendant la frappe
+
