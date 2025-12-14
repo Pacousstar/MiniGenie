@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS, ASSENA_CONFIG, ASSENA_MESSAGES, MODULES } from '@minigenie/shared';
@@ -13,59 +14,151 @@ import { speakAsAssena } from '../components/modules/TTSModule';
 import AssenaAnimations from '../components/Assena/AssenaAnimations';
 
 /**
- * Écran d'accueil avec Assena
+ * Écran d'accueil avec Assena amélioré
  */
 export default function HomeScreen() {
   const router = useRouter();
   const [hasSpoken, setHasSpoken] = useState(false);
+  const [assenaExpression, setAssenaExpression] = useState<'happy' | 'encouraging' | 'thinking' | 'celebrating' | 'listening'>('happy');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const moduleCardsAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Animation d'entrée
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(moduleCardsAnim, {
+        toValue: 1,
+        duration: 800,
+        delay: 300,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
     // Assena se présente à l'arrivée
     if (!hasSpoken) {
       speakAsAssena(ASSENA_MESSAGES.welcome).catch(console.error);
       setHasSpoken(true);
     }
+
+    // Changer l'expression d'Assena périodiquement
+    const expressionInterval = setInterval(() => {
+      const expressions: Array<'happy' | 'encouraging' | 'thinking'> = ['happy', 'encouraging', 'thinking'];
+      setAssenaExpression(expressions[Math.floor(Math.random() * expressions.length)]);
+    }, 5000);
+
+    return () => clearInterval(expressionInterval);
   }, []);
 
   const handleModulePress = (moduleId: string) => {
-    router.push(`/modules?module=${moduleId}`);
+    // Animation de sortie avant navigation
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -50,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      router.push(`/modules?module=${moduleId}`);
+    });
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Header avec Assena */}
-        <View style={styles.header}>
+        <Animated.View
+          style={[
+            styles.header,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           <View style={styles.assenaContainer}>
-            <AssenaAnimations expression="happy" size={120} />
+            <AssenaAnimations expression={assenaExpression} size={120} />
             <Text style={styles.assenaName}>{ASSENA_CONFIG.name}</Text>
           </View>
-        </View>
+        </Animated.View>
 
         {/* Message de bienvenue */}
-        <View style={styles.welcomeCard}>
+        <Animated.View
+          style={[
+            styles.welcomeCard,
+            {
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            },
+          ]}
+        >
           <Text style={styles.welcomeText}>
             {ASSENA_MESSAGES.welcome}
           </Text>
-        </View>
+        </Animated.View>
 
         {/* Modules disponibles */}
         <View style={styles.modulesContainer}>
           <Text style={styles.sectionTitle}>Choisis ce que tu veux apprendre :</Text>
           
-          <View style={styles.modulesGrid}>
-            {Object.entries(MODULES).map(([id, module]) => (
-              <TouchableOpacity
+          <Animated.View
+            style={[
+              styles.modulesGrid,
+              {
+                opacity: moduleCardsAnim,
+                transform: [
+                  {
+                    translateY: moduleCardsAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [30, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            {Object.entries(MODULES).map(([id, module], index) => (
+              <Animated.View
                 key={id}
-                style={styles.moduleCard}
-                onPress={() => handleModulePress(id)}
-                activeOpacity={0.7}
+                style={{
+                  opacity: moduleCardsAnim,
+                  transform: [
+                    {
+                      translateY: moduleCardsAnim.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                }}
               >
-                <Text style={styles.moduleIcon}>{module.icon}</Text>
-                <Text style={styles.moduleTitle}>{module.title}</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.moduleCard}
+                  onPress={() => handleModulePress(id)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.moduleIcon}>{module.icon}</Text>
+                  <Text style={styles.moduleTitle}>{module.title}</Text>
+                </TouchableOpacity>
+              </Animated.View>
             ))}
-          </View>
+          </Animated.View>
         </View>
 
         {/* Boutons */}
@@ -163,11 +256,13 @@ const styles = StyleSheet.create({
     padding: 20,
     marginBottom: 15,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: COLORS.primary.orange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: COLORS.primary.orange + '30',
   },
   moduleIcon: {
     fontSize: 40,

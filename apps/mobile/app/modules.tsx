@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, MODULES, ASSENA_MESSAGES } from '@minigenie/shared';
@@ -19,21 +20,55 @@ import LectureModule from '../components/modules/LectureModule';
 import EcritureModule from '../components/modules/EcritureModule';
 
 /**
- * Écran de module pédagogique
+ * Écran de module pédagogique avec transitions améliorées
  */
 export default function ModuleScreen() {
   const router = useRouter();
   const { module } = useLocalSearchParams<{ module: string }>();
   const [currentModule, setCurrentModule] = useState<string | null>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
     if (module) {
+      // Animation d'entrée du module
+      fadeAnim.setValue(0);
+      slideAnim.setValue(50);
+      
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 50,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      
       setCurrentModule(module);
     }
   }, [module]);
 
   const handleBack = () => {
-    router.back();
+    // Animation de sortie avant retour
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -50,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      router.back();
+    });
   };
 
   // Rendu du module spécifique
@@ -82,7 +117,17 @@ export default function ModuleScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      {renderModule()}
+      <Animated.View
+        style={[
+          styles.moduleContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+          },
+        ]}
+      >
+        {renderModule()}
+      </Animated.View>
     </SafeAreaView>
   );
 }
@@ -91,6 +136,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background.light,
+  },
+  moduleContainer: {
+    flex: 1,
   },
   emptyContainer: {
     flex: 1,

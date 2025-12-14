@@ -72,6 +72,30 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
   useEffect(() => {
     // Prononcer la lettre au chargement
     speakLetter(currentChar);
+    
+    // Animation d'apparition de la lettre
+    letterBounceAnim.setValue(0);
+    Animated.parallel([
+      Animated.spring(letterBounceAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start();
   }, [currentLetter]);
   
   // Vérifier les pauses dans un effet séparé
@@ -325,11 +349,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowColor: COLORS.primary.orange,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
     borderWidth: 4,
     borderColor: COLORS.primary.orange,
   },
