@@ -17,6 +17,10 @@ export interface ChildProfile {
   age: number;
   level: EducationLevel;
   userLevel: number; // Niveau détecté automatiquement (0-100)
+  overallScore?: number; // Score global (0-100)
+  sessions?: any[]; // Sessions d'apprentissage
+  modulesProgress?: Record<string, any>; // Progression par module
+  badges?: any[]; // Badges débloqués
   createdAt: Date;
   updatedAt: Date;
 }

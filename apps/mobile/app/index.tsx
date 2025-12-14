@@ -19,6 +19,8 @@ export default function SplashScreen() {
   const [scaleAnim] = useState(new Animated.Value(0.8));
 
   useEffect(() => {
+    let timer: NodeJS.Timeout;
+    
     // Animation d'entrée
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -41,7 +43,7 @@ export default function SplashScreen() {
         const profile = await getChildProfile();
         
         // Redirection après 2.5 secondes
-        setTimeout(() => {
+        timer = setTimeout(() => {
           if (profile) {
             router.replace('/home');
           } else {
@@ -50,7 +52,7 @@ export default function SplashScreen() {
         }, 2500);
       } catch (error) {
         // En cas d'erreur, rediriger vers le profil
-        setTimeout(() => {
+        timer = setTimeout(() => {
           router.replace('/profile');
         }, 2500);
       }
@@ -58,7 +60,9 @@ export default function SplashScreen() {
     
     checkProfile();
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
   }, []);
 
   return (

@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'expo-router';
 import { COLORS, ASSENA_CONFIG } from '@minigenie/shared';
 import { saveChildProfile, getChildProfile } from '@minigenie/shared/src/utils/storage';
+import { badgeService } from '../services/BadgeService';
 import type { ChildProfile, EducationLevel } from '@minigenie/shared';
 
 /**
@@ -27,6 +28,8 @@ export default function ProfileScreen() {
   useEffect(() => {
     // Charger le profil existant s'il existe
     loadProfile();
+    // Charger les badges
+    badgeService.loadBadges();
   }, []);
 
   const loadProfile = async () => {

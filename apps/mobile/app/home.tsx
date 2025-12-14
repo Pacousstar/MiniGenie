@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS, ASSENA_CONFIG, ASSENA_MESSAGES, MODULES } from '@minigenie/shared';
-import * as Speech from 'expo-speech';
+import { speakAsAssena } from '../components/modules/TTSModule';
+import AssenaAnimations from '../components/Assena/AssenaAnimations';
 
 /**
  * Écran d'accueil avec Assena
@@ -21,11 +22,7 @@ export default function HomeScreen() {
   useEffect(() => {
     // Assena se présente à l'arrivée
     if (!hasSpoken) {
-      Speech.speak(ASSENA_MESSAGES.welcome, {
-        language: 'fr-FR',
-        pitch: 1.2,
-        rate: 0.9,
-      });
+      speakAsAssena(ASSENA_MESSAGES.welcome).catch(console.error);
       setHasSpoken(true);
     }
   }, []);
@@ -40,10 +37,7 @@ export default function HomeScreen() {
         {/* Header avec Assena */}
         <View style={styles.header}>
           <View style={styles.assenaContainer}>
-            {/* Placeholder Assena - À remplacer par l'image réelle */}
-            <View style={styles.assenaAvatar}>
-              <Text style={styles.assenaEmoji}>👧</Text>
-            </View>
+            <AssenaAnimations expression="happy" size={120} />
             <Text style={styles.assenaName}>{ASSENA_CONFIG.name}</Text>
           </View>
         </View>
@@ -74,13 +68,22 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Bouton Profil */}
-        <TouchableOpacity
-          style={styles.profileButton}
-          onPress={() => router.push('/profile')}
-        >
-          <Text style={styles.profileButtonText}>Mon Profil</Text>
-        </TouchableOpacity>
+        {/* Boutons */}
+        <View style={styles.actionsContainer}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/badges')}
+          >
+            <Text style={styles.actionButtonText}>🏆 Mes Badges</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/profile')}
+          >
+            <Text style={styles.actionButtonText}>👤 Mon Profil</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -176,16 +179,23 @@ const styles = StyleSheet.create({
     color: COLORS.text.dark,
     textAlign: 'center',
   },
-  profileButton: {
+  actionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: 10,
+    gap: 10,
+  },
+  actionButton: {
+    flex: 1,
     backgroundColor: COLORS.primary.green,
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    marginTop: 10,
   },
-  profileButtonText: {
+  actionButtonText: {
     color: COLORS.primary.white,
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

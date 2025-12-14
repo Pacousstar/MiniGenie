@@ -9,8 +9,14 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { COLORS, MODULES, ASSENA_MESSAGES } from '@minigenie/shared';
-import * as Speech from 'expo-speech';
 import AlphabetModule from '../components/modules/AlphabetModule';
+import ChiffresModule from '../components/modules/ChiffresModule';
+import VocabulaireModule from '../components/modules/VocabulaireModule';
+import CalculModule from '../components/modules/CalculModule';
+import SyllabesModule from '../components/modules/SyllabesModule';
+import FamilleModule from '../components/modules/FamilleModule';
+import LectureModule from '../components/modules/LectureModule';
+import EcritureModule from '../components/modules/EcritureModule';
 
 /**
  * Écran de module pédagogique
@@ -46,6 +52,20 @@ export default function ModuleScreen() {
     switch (currentModule) {
       case 'alphabet':
         return <AlphabetModule onComplete={handleBack} />;
+      case 'chiffres':
+        return <ChiffresModule onComplete={handleBack} />;
+      case 'vocabulaire':
+        return <VocabulaireModule onComplete={handleBack} />;
+      case 'calcul':
+        return <CalculModule onComplete={handleBack} />;
+      case 'syllabes':
+        return <SyllabesModule onComplete={handleBack} />;
+      case 'famille':
+        return <FamilleModule onComplete={handleBack} />;
+      case 'lecture':
+        return <LectureModule onComplete={handleBack} />;
+      case 'ecriture':
+        return <EcritureModule onComplete={handleBack} />;
       default:
         return (
           <View style={styles.comingSoonContainer}>

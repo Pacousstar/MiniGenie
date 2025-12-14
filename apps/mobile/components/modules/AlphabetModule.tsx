@@ -9,7 +9,13 @@ import {
   Animated,
 } from 'react-native';
 import { COLORS, ASSENA_MESSAGES } from '@minigenie/shared';
-import * as Speech from 'expo-speech';
+import { speakAsAssena, stopSpeaking } from './TTSModule';
+import { badgeService } from '../../services/BadgeService';
+import { sessionService } from '../../services/SessionService';
+import { progressService } from '../../services/ProgressService';
+import BadgeCelebration from '../BadgeCelebration';
+import PauseModal from '../PauseModal';
+import { getChildProfile } from '@minigenie/shared/src/utils/storage';
 
 interface AlphabetModuleProps {
   onComplete?: () => void;
@@ -22,38 +28,80 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
   const [currentLetter, setCurrentLetter] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [fadeAnim] = useState(new Animated.Value(1));
+  const [newBadge, setNewBadge] = useState<any>(null);
+  const [showBadgeCelebration, setShowBadgeCelebration] = useState(false);
+  const [childId, setChildId] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [showPauseModal, setShowPauseModal] = useState(false);
 
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
   const currentChar = alphabet[currentLetter];
 
   useEffect(() => {
+    // Initialiser la session
+    const initSession = async () => {
+      try {
+        const profile = await getChildProfile();
+        if (profile) {
+          setChildId(profile.id);
+          const session = await sessionService.startSession(
+            profile.id,
+            'alphabet',
+            'alphabet'
+          );
+          setSessionId(session.id);
+        }
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation de la session:', error);
+      }
+    };
+    
+    initSession();
+    
+    // Prononcer la lettre au chargement
+    speakLetter(currentChar);
+    
+    // Nettoyer la session à la fin
+    return () => {
+      if (childId) {
+        sessionService.endSession().catch(console.error);
+      }
+    };
+  }, []);
+  
+  useEffect(() => {
     // Prononcer la lettre au chargement
     speakLetter(currentChar);
   }, [currentLetter]);
+  
+  // Vérifier les pauses dans un effet séparé
+  useEffect(() => {
+    const checkPause = setInterval(() => {
+      if (sessionService.shouldTakeBreak() && !showPauseModal) {
+        setShowPauseModal(true);
+      }
+    }, 60000); // Vérifier toutes les minutes
+    
+    return () => clearInterval(checkPause);
+  }, [showPauseModal]);
 
-  const speakLetter = (letter: string) => {
+  const speakLetter = async (letter: string) => {
     if (isPlaying) return;
     
     setIsPlaying(true);
-    const message = `Voici la lettre ${letter}. ${letter} comme...`;
+    const exampleWord = getExampleWord(letter);
+    const message = `Voici la lettre ${letter}. ${letter} comme ${exampleWord}.`;
     
-    Speech.speak(message, {
-      language: 'fr-FR',
-      pitch: 1.2,
-      rate: 0.9,
-      onDone: () => {
-        setIsPlaying(false);
-      },
-      onStopped: () => {
-        setIsPlaying(false);
-      },
-      onError: () => {
-        setIsPlaying(false);
-      },
-    });
+    try {
+      await speakAsAssena(message);
+    } catch (error) {
+      console.error('Erreur lors de la synthèse vocale:', error);
+    } finally {
+      setIsPlaying(false);
+    }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentLetter < alphabet.length - 1) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
@@ -71,13 +119,26 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
       setCurrentLetter(currentLetter + 1);
     } else {
       // Module terminé
-      Speech.speak(ASSENA_MESSAGES.encouragement[0], {
-        language: 'fr-FR',
-        pitch: 1.2,
-        rate: 0.9,
-      });
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      
+      // Calculer le score (100% si toutes les lettres vues)
+      const score = 100;
+      
+      // Mettre à jour la progression
+      if (childId) {
+        await progressService.updateModuleProgress(childId, 'alphabet', score, true);
+        await sessionService.endSession(score, true);
+      }
+      
+      // Vérifier les badges
+      const unlockedBadges = badgeService.checkAndUnlockBadges('alphabet', alphabet.length);
+      if (unlockedBadges.length > 0) {
+        setNewBadge(unlockedBadges[0]);
+        setShowBadgeCelebration(true);
+      }
+      
       if (onComplete) {
-        setTimeout(() => onComplete(), 2000);
+        setTimeout(() => onComplete(), 3000);
       }
     }
   };
@@ -201,6 +262,31 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
           </Text>
         </View>
       </ScrollView>
+      
+      {/* Célébration de badge */}
+      {newBadge && (
+        <BadgeCelebration
+          badge={newBadge}
+          visible={showBadgeCelebration}
+          onClose={() => {
+            setShowBadgeCelebration(false);
+            setNewBadge(null);
+          }}
+        />
+      )}
+      
+      {/* Modal de pause */}
+      <PauseModal
+        visible={showPauseModal}
+        sessionDuration={sessionService.getCurrentSessionDuration()}
+        onContinue={() => setShowPauseModal(false)}
+        onTakeBreak={() => {
+          setShowPauseModal(false);
+          if (onComplete) {
+            onComplete();
+          }
+        }}
+      />
     </SafeAreaView>
   );
 }
