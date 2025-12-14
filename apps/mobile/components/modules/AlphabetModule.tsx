@@ -13,6 +13,7 @@ import { speakAsAssena, stopSpeaking } from './TTSModule';
 import { badgeService } from '../../services/BadgeService';
 import { sessionService } from '../../services/SessionService';
 import { progressService } from '../../services/ProgressService';
+import { soundService } from '../../services/SoundService';
 import BadgeCelebration from '../BadgeCelebration';
 import PauseModal from '../PauseModal';
 import { getChildProfile } from '@minigenie/shared/src/utils/storage';
@@ -159,6 +160,9 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
       if (unlockedBadges.length > 0) {
         setNewBadge(unlockedBadges[0]);
         setShowBadgeCelebration(true);
+        // Son de badge et célébration
+        soundService.playBadge().catch(console.error);
+        soundService.playCelebration().catch(console.error);
       }
       
       if (onComplete) {

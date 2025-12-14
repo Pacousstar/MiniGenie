@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { COLORS } from '@minigenie/shared';
 import AssenaAnimations from './Assena/AssenaAnimations';
+import { soundService } from '../services/SoundService';
 import type { Badge } from '../services/BadgeService';
 
 interface BadgeCelebrationProps {
@@ -27,6 +28,10 @@ export default function BadgeCelebration({ badge, visible, onClose }: BadgeCeleb
 
   useEffect(() => {
     if (visible) {
+      // Son de célébration et badge
+      soundService.playCelebration().catch(console.error);
+      soundService.playBadge().catch(console.error);
+      
       // Animation d'entrée améliorée avec rebond
       Animated.parallel([
         Animated.sequence([

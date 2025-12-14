@@ -13,6 +13,7 @@ import { speakAsAssena } from './TTSModule';
 import { badgeService } from '../../services/BadgeService';
 import { sessionService } from '../../services/SessionService';
 import { progressService } from '../../services/ProgressService';
+import { soundService } from '../../services/SoundService';
 import BadgeCelebration from '../BadgeCelebration';
 import { getChildProfile } from '@minigenie/shared/src/utils/storage';
 
@@ -140,6 +141,9 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
     setAttempts(attempts + 1);
 
     if (correct) {
+      // Son de succès
+      soundService.playSuccess().catch(console.error);
+      
       const newScore = score + 1;
       setScore(newScore);
       speakAsAssena(ASSENA_MESSAGES.encouragement[Math.floor(Math.random() * ASSENA_MESSAGES.encouragement.length)]).catch(console.error);
@@ -149,6 +153,8 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
       if (unlockedBadges.length > 0) {
         setNewBadge(unlockedBadges[0]);
         setShowBadgeCelebration(true);
+        // Son de badge
+        soundService.playBadge().catch(console.error);
       }
       
       // Nouveau problème après 2 secondes
@@ -172,6 +178,9 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
         }
       }, 2000);
     } else {
+      // Son d'erreur (doux et encourageant)
+      soundService.playError().catch(console.error);
+      
       speakAsAssena(ASSENA_MESSAGES.correction[0]).catch(console.error);
       
       // Nouveau problème après 2 secondes

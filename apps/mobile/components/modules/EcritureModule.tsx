@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { COLORS, ASSENA_MESSAGES } from '@minigenie/shared';
 import { speakAsAssena } from './TTSModule';
+import { soundService } from '../../services/SoundService';
 
 interface EcritureModuleProps {
   onComplete?: () => void;
@@ -114,6 +115,9 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
     // Dans une vraie implémentation, on utiliserait une reconnaissance de forme
     if (drawingPath.length > 10) {
       setFeedback('Bien ! Continue comme ça !');
+      // Son d'encouragement
+      soundService.playEncouragement().catch(console.error);
+      
       // Animation de feedback positif
       Animated.sequence([
         Animated.timing(feedbackAnim, {
@@ -131,6 +135,9 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
       speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
     } else {
       setFeedback('Essaie de tracer toute la lettre !');
+      // Son d'erreur doux
+      soundService.playError().catch(console.error);
+      
       // Animation de feedback d'encouragement
       Animated.sequence([
         Animated.timing(feedbackAnim, {
