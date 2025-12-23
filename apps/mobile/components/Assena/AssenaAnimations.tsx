@@ -135,15 +135,15 @@ export default function AssenaAnimations({ expression, size = 120 }: AssenaAnima
       case 'encouraging':
         // Animation d'encouragement (pulsation rythmée + rebond)
         Animated.parallel([
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(scaleAnim, {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(scaleAnim, {
                 toValue: 1.12,
                 duration: 350,
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 1,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+              toValue: 1,
                 duration: 350,
                 useNativeDriver: true,
               }),
@@ -158,10 +158,10 @@ export default function AssenaAnimations({ expression, size = 120 }: AssenaAnima
               }),
               Animated.timing(bounceAnim, {
                 toValue: 0,
-                duration: 400,
-                useNativeDriver: true,
-              }),
-            ])
+              duration: 400,
+              useNativeDriver: true,
+            }),
+          ])
           ),
         ]).start();
         break;
@@ -217,19 +217,19 @@ export default function AssenaAnimations({ expression, size = 120 }: AssenaAnima
               }),
             ])
           ),
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(rotateAnim, {
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(rotateAnim, {
                 toValue: 0.08,
-                duration: 1000,
-                useNativeDriver: true,
-              }),
-              Animated.timing(rotateAnim, {
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(rotateAnim, {
                 toValue: -0.08,
-                duration: 1000,
-                useNativeDriver: true,
-              }),
-            ])
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ])
           ),
         ]).start();
         break;

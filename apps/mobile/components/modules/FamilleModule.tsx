@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,16 +22,52 @@ interface FamilleMember {
 }
 
 const FAMILLE: FamilleMember[] = [
+  // Parents directs
   { word: 'Papa', emoji: '👨', description: 'Ton père' },
   { word: 'Maman', emoji: '👩', description: 'Ta mère' },
+  { word: 'Parents', emoji: '👨‍👩‍👧', description: 'Papa et maman ensemble' },
+  
+  // Grands-parents
   { word: 'Grand-père', emoji: '👴', description: 'Le père de papa ou maman' },
   { word: 'Grand-mère', emoji: '👵', description: 'La mère de papa ou maman' },
+  { word: 'Grands-parents', emoji: '👴‍👵', description: 'Grand-père et grand-mère' },
+  
+  // Frères et sœurs
   { word: 'Frère', emoji: '👦', description: 'Ton frère' },
   { word: 'Sœur', emoji: '👧', description: 'Ta sœur' },
+  { word: 'Grand frère', emoji: '👨', description: 'Ton frère plus âgé' },
+  { word: 'Grande sœur', emoji: '👩', description: 'Ta sœur plus âgée' },
+  { word: 'Petit frère', emoji: '👶', description: 'Ton frère plus jeune' },
+  { word: 'Petite sœur', emoji: '👶', description: 'Ta sœur plus jeune' },
+  
+  // Oncles et tantes
   { word: 'Oncle', emoji: '👨', description: 'Le frère de papa ou maman' },
   { word: 'Tante', emoji: '👩', description: 'La sœur de papa ou maman' },
+  
+  // Cousins et cousines
   { word: 'Cousin', emoji: '👦', description: 'Le fils de ton oncle ou tante' },
   { word: 'Cousine', emoji: '👧', description: 'La fille de ton oncle ou tante' },
+  
+  // Neveux et nièces
+  { word: 'Neveu', emoji: '👦', description: 'Le fils de ton frère ou sœur' },
+  { word: 'Nièce', emoji: '👧', description: 'La fille de ton frère ou sœur' },
+  
+  // Beaux-parents
+  { word: 'Beau-père', emoji: '👨', description: 'Le nouveau mari de maman' },
+  { word: 'Belle-mère', emoji: '👩', description: 'La nouvelle femme de papa' },
+  
+  // Beaux-frères et belles-sœurs
+  { word: 'Beau-frère', emoji: '👨', description: 'Le mari de ta sœur' },
+  { word: 'Belle-sœur', emoji: '👩', description: 'La femme de ton frère' },
+  
+  // Famille élargie
+  { word: 'Arrière-grand-père', emoji: '👴', description: 'Le père de ton grand-père' },
+  { word: 'Arrière-grand-mère', emoji: '👵', description: 'La mère de ta grand-mère' },
+  { word: 'Parrain', emoji: '👨', description: 'Le parrain qui t\'accompagne' },
+  { word: 'Marraine', emoji: '👩', description: 'La marraine qui t\'accompagne' },
+  
+  // Famille par alliance
+  { word: 'Belle-famille', emoji: '👨‍👩‍👧‍👦', description: 'La famille de ton conjoint' },
 ];
 
 /**
@@ -40,15 +76,15 @@ const FAMILLE: FamilleMember[] = [
 export default function FamilleModule({ onComplete }: FamilleModuleProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(1));
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const currentMember = FAMILLE[currentIndex];
+  const currentMember = useMemo(() => FAMILLE[currentIndex], [currentIndex]);
 
   useEffect(() => {
     speakMember(currentMember);
   }, [currentIndex]);
 
-  const speakMember = async (member: FamilleMember) => {
+  const speakMember = useCallback(async (member: FamilleMember) => {
     if (isPlaying) return;
     
     setIsPlaying(true);
@@ -57,13 +93,13 @@ export default function FamilleModule({ onComplete }: FamilleModuleProps) {
     try {
       await speakAsAssena(message);
     } catch (error) {
-      console.error('Erreur lors de la synthèse vocale:', error);
+      console.warn('Erreur lors de la synthèse vocale:', error);
     } finally {
       setIsPlaying(false);
     }
-  };
+  }, [isPlaying]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndex < FAMILLE.length - 1) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
@@ -78,24 +114,26 @@ export default function FamilleModule({ onComplete }: FamilleModuleProps) {
         }),
       ]).start();
       
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(prev => prev + 1);
     } else {
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => {
+        console.warn('Erreur TTS encouragement:', err);
+      });
       if (onComplete) {
         setTimeout(() => onComplete(), 2000);
       }
     }
-  };
+  }, [currentIndex, fadeAnim, onComplete]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(prev => prev - 1);
     }
-  };
+  }, [currentIndex]);
 
-  const handleRepeat = () => {
+  const handleRepeat = useCallback(() => {
     speakMember(currentMember);
-  };
+  }, [currentMember, speakMember]);
 
   return (
     <SafeAreaView style={styles.container}>

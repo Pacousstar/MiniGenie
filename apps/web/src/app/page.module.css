@@ -205,7 +205,26 @@
   font-weight: 600;
 }
 
+.lastAttempt {
+  color: #616161;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.filtersSection {
+  margin-bottom: 2rem;
+}
+
+.chartsSection {
+  margin-bottom: 3rem;
+}
+
 .sessionsSection {
+  margin-bottom: 3rem;
+}
+
+.reportSection {
   margin-bottom: 3rem;
 }
 

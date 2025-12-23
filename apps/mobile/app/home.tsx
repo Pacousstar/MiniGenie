@@ -75,7 +75,7 @@ export default function HomeScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      router.push(`/modules?module=${moduleId}`);
+    router.push(`/modules?module=${moduleId}`);
     });
   };
 
@@ -148,14 +148,14 @@ export default function HomeScreen() {
                   ],
                 }}
               >
-                <TouchableOpacity
-                  style={styles.moduleCard}
-                  onPress={() => handleModulePress(id)}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.moduleIcon}>{module.icon}</Text>
-                  <Text style={styles.moduleTitle}>{module.title}</Text>
-                </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.moduleCard}
+                onPress={() => handleModulePress(id)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.moduleIcon}>{module.icon}</Text>
+                <Text style={styles.moduleTitle}>{module.title}</Text>
+              </TouchableOpacity>
               </Animated.View>
             ))}
           </Animated.View>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -15,12 +15,17 @@ interface SyllabesModuleProps {
   onComplete?: () => void;
 }
 
+// Syllabes complètes - toutes les combinaisons courantes
 const SYLLABES = [
+  // Consonnes + a, e, i, o, u
   'ba', 'be', 'bi', 'bo', 'bu',
   'ca', 'ce', 'ci', 'co', 'cu',
   'da', 'de', 'di', 'do', 'du',
   'fa', 'fe', 'fi', 'fo', 'fu',
   'ga', 'ge', 'gi', 'go', 'gu',
+  'ha', 'he', 'hi', 'ho', 'hu',
+  'ja', 'je', 'ji', 'jo', 'ju',
+  'ka', 'ke', 'ki', 'ko', 'ku',
   'la', 'le', 'li', 'lo', 'lu',
   'ma', 'me', 'mi', 'mo', 'mu',
   'na', 'ne', 'ni', 'no', 'nu',
@@ -29,6 +34,18 @@ const SYLLABES = [
   'sa', 'se', 'si', 'so', 'su',
   'ta', 'te', 'ti', 'to', 'tu',
   'va', 've', 'vi', 'vo', 'vu',
+  'wa', 'we', 'wi', 'wo', 'wu',
+  'za', 'ze', 'zi', 'zo', 'zu',
+  // Syllabes avec accents
+  'ça', 'çe', 'çi', 'ço', 'çu',
+  'é', 'è', 'ê', 'ë',
+  'à', 'â',
+  'î', 'ï',
+  'ô', 'ö',
+  'ù', 'û', 'ü',
+  // Syllabes composées courantes
+  'bl', 'br', 'cl', 'cr', 'dr', 'fl', 'fr', 'gl', 'gr', 'pl', 'pr', 'tr', 'vr',
+  'ch', 'ph', 'th',
 ];
 
 /**
@@ -37,16 +54,15 @@ const SYLLABES = [
 export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(1));
-  const [maxItems] = useState(20); // Limiter à 20 syllabes
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const currentSyllabe = SYLLABES[currentIndex];
+  const currentSyllabe = useMemo(() => SYLLABES[currentIndex], [currentIndex]);
 
   useEffect(() => {
     speakSyllabe(currentSyllabe);
   }, [currentIndex]);
 
-  const speakSyllabe = async (syllabe: string) => {
+  const speakSyllabe = useCallback(async (syllabe: string) => {
     if (isPlaying) return;
     
     setIsPlaying(true);
@@ -55,14 +71,14 @@ export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
     try {
       await speakAsAssena(message);
     } catch (error) {
-      console.error('Erreur lors de la synthèse vocale:', error);
+      console.warn('Erreur lors de la synthèse vocale:', error);
     } finally {
       setIsPlaying(false);
     }
-  };
+  }, [isPlaying]);
 
-  const handleNext = () => {
-    if (currentIndex < maxItems - 1) {
+  const handleNext = useCallback(() => {
+    if (currentIndex < SYLLABES.length - 1) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -76,24 +92,26 @@ export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
         }),
       ]).start();
       
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(prev => prev + 1);
     } else {
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => {
+        console.warn('Erreur TTS encouragement:', err);
+      });
       if (onComplete) {
         setTimeout(() => onComplete(), 2000);
       }
     }
-  };
+  }, [currentIndex, fadeAnim, onComplete]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(prev => prev - 1);
     }
-  };
+  }, [currentIndex]);
 
-  const handleRepeat = () => {
+  const handleRepeat = useCallback(() => {
     speakSyllabe(currentSyllabe);
-  };
+  }, [currentSyllabe, speakSyllabe]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,7 +119,7 @@ export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Syllabes</Text>
           <Text style={styles.subtitle}>
-            Syllabe {currentIndex + 1} sur {maxItems}
+            Syllabe {currentIndex + 1} sur {SYLLABES.length}
           </Text>
         </View>
 
@@ -135,12 +153,12 @@ export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.controlButton, currentIndex === maxItems - 1 && styles.controlButtonDisabled]}
+            style={[styles.controlButton, currentIndex === SYLLABES.length - 1 && styles.controlButtonDisabled]}
             onPress={handleNext}
-            disabled={currentIndex === maxItems - 1}
+            disabled={currentIndex === SYLLABES.length - 1}
           >
             <Text style={styles.controlButtonText}>
-              {currentIndex === maxItems - 1 ? 'Terminer ✓' : 'Suivant →'}
+              {currentIndex === SYLLABES.length - 1 ? 'Terminer ✓' : 'Suivant →'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -150,7 +168,7 @@ export default function SyllabesModule({ onComplete }: SyllabesModuleProps) {
             <View
               style={[
                 styles.progressFill,
-                { width: `${((currentIndex + 1) / maxItems) * 100}%` },
+                { width: `${((currentIndex + 1) / SYLLABES.length) * 100}%` },
               ]}
             />
           </View>

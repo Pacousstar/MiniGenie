@@ -41,12 +41,12 @@ export default function BadgeCelebration({ badge, visible, onClose }: BadgeCeleb
             friction: 5,
             useNativeDriver: true,
           }),
-          Animated.spring(scaleAnim, {
-            toValue: 1,
-            tension: 50,
-            friction: 7,
-            useNativeDriver: true,
-          }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 7,
+          useNativeDriver: true,
+        }),
         ]),
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -83,9 +83,9 @@ export default function BadgeCelebration({ badge, visible, onClose }: BadgeCeleb
         }),
       ]).start(() => {
         // Réinitialiser après l'animation
-        scaleAnim.setValue(0);
-        fadeAnim.setValue(0);
-        rotateAnim.setValue(0);
+      scaleAnim.setValue(0);
+      fadeAnim.setValue(0);
+      rotateAnim.setValue(0);
       });
     }
   }, [visible]);
@@ -126,11 +126,11 @@ export default function BadgeCelebration({ badge, visible, onClose }: BadgeCeleb
               ][i % 4];
               
               return (
-                <Animated.View
-                  key={i}
-                  style={[
-                    styles.confetti,
-                    {
+              <Animated.View
+                key={i}
+                style={[
+                  styles.confetti,
+                  {
                       left: `${(i * 4) % 100}%`,
                       top: `${(i * 3) % 100}%`,
                       backgroundColor: randomColor,
@@ -144,9 +144,9 @@ export default function BadgeCelebration({ badge, visible, onClose }: BadgeCeleb
                         },
                       ],
                       opacity: fadeAnim,
-                    },
-                  ]}
-                />
+                  },
+                ]}
+              />
               );
             })}
           </View>

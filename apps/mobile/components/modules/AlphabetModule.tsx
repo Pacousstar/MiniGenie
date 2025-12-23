@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,37 @@ interface AlphabetModuleProps {
   onComplete?: () => void;
 }
 
+// Constantes en dehors du composant
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const LETTER_EXAMPLES: Record<string, string> = {
+  A: 'Arbre',
+  B: 'Bateau',
+  C: 'Chat',
+  D: 'Doudou',
+  E: 'École',
+  F: 'Fleur',
+  G: 'Girafe',
+  H: 'Hippopotame',
+  I: 'Ile',
+  J: 'Jouet',
+  K: 'Kangourou',
+  L: 'Lion',
+  M: 'Maman',
+  N: 'Nuit',
+  O: 'Orange',
+  P: 'Papa',
+  Q: 'Quatre',
+  R: 'Roi',
+  S: 'Soleil',
+  T: 'Tigre',
+  U: 'Univers',
+  V: 'Voiture',
+  W: 'Wagon',
+  X: 'Xylophone',
+  Y: 'Yoyo',
+  Z: 'Zèbre',
+};
+
 /**
  * Module Alphabet - Apprendre les lettres A-Z
  */
@@ -34,23 +65,29 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
   const [childId, setChildId] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [showPauseModal, setShowPauseModal] = useState(false);
+  const [letterBounceAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(1));
 
-  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-  const currentChar = alphabet[currentLetter];
+  const currentChar = ALPHABET[currentLetter];
+  const exampleWord = LETTER_EXAMPLES[currentChar] || currentChar;
 
+  // Initialisation de la session (une seule fois au montage)
   useEffect(() => {
-    // Initialiser la session
+    let isMounted = true;
+    
     const initSession = async () => {
       try {
         const profile = await getChildProfile();
-        if (profile) {
+        if (profile && isMounted) {
           setChildId(profile.id);
           const session = await sessionService.startSession(
             profile.id,
             'alphabet',
             'alphabet'
           );
-          setSessionId(session.id);
+          if (isMounted) {
+            setSessionId(session.id);
+          }
         }
       } catch (error) {
         console.error('Erreur lors de l\'initialisation de la session:', error);
@@ -59,45 +96,74 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
     
     initSession();
     
-    // Prononcer la lettre au chargement
-    speakLetter(currentChar);
-    
-    // Nettoyer la session à la fin
     return () => {
+      isMounted = false;
       if (childId) {
-        sessionService.endSession().catch(console.error);
+        sessionService.endSession().catch((err) => {
+          console.warn('Erreur lors de la fermeture de la session:', err);
+        });
       }
     };
   }, []);
   
-  useEffect(() => {
-    // Prononcer la lettre au chargement
-    speakLetter(currentChar);
+  const speakLetter = useCallback(async (letter: string) => {
+    if (isPlaying) return;
     
-    // Animation d'apparition de la lettre
-    letterBounceAnim.setValue(0);
-    Animated.parallel([
-      Animated.spring(letterBounceAnim, {
-        toValue: 1,
-        tension: 50,
-        friction: 7,
-        useNativeDriver: true,
-      }),
-      Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.2,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
+    setIsPlaying(true);
+    const word = LETTER_EXAMPLES[letter] || letter;
+    const message = `Voici la lettre ${letter}. ${letter} comme ${word}.`;
+    
+    try {
+      await speakAsAssena(message);
+    } catch (error) {
+      console.error('Erreur lors de la synthèse vocale:', error);
+      // Ne pas bloquer l'interface en cas d'erreur TTS
+    } finally {
+      setIsPlaying(false);
+    }
+  }, [isPlaying]);
+
+  // Prononcer la lettre et animer quand elle change
+  useEffect(() => {
+    let isMounted = true;
+    
+    const animateAndSpeak = async () => {
+      // Animation d'apparition de la lettre
+      letterBounceAnim.setValue(0);
+      Animated.parallel([
+        Animated.spring(letterBounceAnim, {
           toValue: 1,
           tension: 50,
           friction: 7,
           useNativeDriver: true,
         }),
-      ]),
-    ]).start();
-  }, [currentLetter]);
+        Animated.sequence([
+          Animated.timing(scaleAnim, {
+            toValue: 1.2,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.spring(scaleAnim, {
+            toValue: 1,
+            tension: 50,
+            friction: 7,
+            useNativeDriver: true,
+          }),
+        ]),
+      ]).start();
+      
+      // Prononcer la lettre
+      if (isMounted) {
+        await speakLetter(currentChar);
+      }
+    };
+    
+    animateAndSpeak();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [currentLetter, currentChar, speakLetter, letterBounceAnim, scaleAnim]);
   
   // Vérifier les pauses dans un effet séparé
   useEffect(() => {
@@ -110,24 +176,8 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
     return () => clearInterval(checkPause);
   }, [showPauseModal]);
 
-  const speakLetter = async (letter: string) => {
-    if (isPlaying) return;
-    
-    setIsPlaying(true);
-    const exampleWord = getExampleWord(letter);
-    const message = `Voici la lettre ${letter}. ${letter} comme ${exampleWord}.`;
-    
-    try {
-      await speakAsAssena(message);
-    } catch (error) {
-      console.error('Erreur lors de la synthèse vocale:', error);
-    } finally {
-      setIsPlaying(false);
-    }
-  };
-
   const handleNext = async () => {
-    if (currentLetter < alphabet.length - 1) {
+    if (currentLetter < ALPHABET.length - 1) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -156,7 +206,7 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
       }
       
       // Vérifier les badges
-      const unlockedBadges = badgeService.checkAndUnlockBadges('alphabet', alphabet.length);
+      const unlockedBadges = badgeService.checkAndUnlockBadges('alphabet', ALPHABET.length);
       if (unlockedBadges.length > 0) {
         setNewBadge(unlockedBadges[0]);
         setShowBadgeCelebration(true);
@@ -221,7 +271,7 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Alphabet</Text>
           <Text style={styles.subtitle}>
-            Lettre {currentLetter + 1} sur {alphabet.length}
+            Lettre {currentLetter + 1} sur {ALPHABET.length}
           </Text>
         </View>
 
@@ -240,7 +290,7 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
         {/* Exemple de mot */}
         <View style={styles.exampleContainer}>
           <Text style={styles.exampleLabel}>
-            {currentChar} comme {getExampleWord(currentChar)}
+            {currentChar} comme {exampleWord}
           </Text>
         </View>
 
@@ -265,12 +315,12 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.controlButton, currentLetter === alphabet.length - 1 && styles.controlButtonDisabled]}
+            style={[styles.controlButton, currentLetter === ALPHABET.length - 1 && styles.controlButtonDisabled]}
             onPress={handleNext}
-            disabled={currentLetter === alphabet.length - 1}
+            disabled={currentLetter === ALPHABET.length - 1}
           >
             <Text style={styles.controlButtonText}>
-              {currentLetter === alphabet.length - 1 ? 'Terminer ✓' : 'Suivant →'}
+              {currentLetter === ALPHABET.length - 1 ? 'Terminer ✓' : 'Suivant →'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -281,12 +331,12 @@ export default function AlphabetModule({ onComplete }: AlphabetModuleProps) {
             <View
               style={[
                 styles.progressFill,
-                { width: `${((currentLetter + 1) / alphabet.length) * 100}%` },
+                { width: `${((currentLetter + 1) / ALPHABET.length) * 100}%` },
               ]}
             />
           </View>
           <Text style={styles.progressText}>
-            {currentLetter + 1} / {alphabet.length}
+            {currentLetter + 1} / {ALPHABET.length}
           </Text>
         </View>
       </ScrollView>

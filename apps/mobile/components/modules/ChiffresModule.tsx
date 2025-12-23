@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -21,14 +21,14 @@ interface ChiffresModuleProps {
 export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
   const [currentNumber, setCurrentNumber] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(1));
-  const [maxNumber] = useState(20); // Commencer par 1-20
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const MAX_NUMBER = 100; // Constante en dehors du composant
 
   useEffect(() => {
     speakNumber(currentNumber);
   }, [currentNumber]);
 
-  const speakNumber = async (number: number) => {
+  const speakNumber = useCallback(async (number: number) => {
     if (isPlaying) return;
     
     setIsPlaying(true);
@@ -37,14 +37,14 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
     try {
       await speakAsAssena(message);
     } catch (error) {
-      console.error('Erreur lors de la synthèse vocale:', error);
+      console.warn('Erreur lors de la synthèse vocale:', error);
     } finally {
       setIsPlaying(false);
     }
-  };
+  }, [isPlaying]);
 
-  const handleNext = () => {
-    if (currentNumber < maxNumber) {
+  const handleNext = useCallback(() => {
+    if (currentNumber < MAX_NUMBER) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
           toValue: 0,
@@ -58,25 +58,27 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
         }),
       ]).start();
       
-      setCurrentNumber(currentNumber + 1);
+      setCurrentNumber(prev => prev + 1);
     } else {
       // Module terminé
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => {
+        console.warn('Erreur TTS encouragement:', err);
+      });
       if (onComplete) {
         setTimeout(() => onComplete(), 2000);
       }
     }
-  };
+  }, [currentNumber, fadeAnim, onComplete]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentNumber > 1) {
-      setCurrentNumber(currentNumber - 1);
+      setCurrentNumber(prev => prev - 1);
     }
-  };
+  }, [currentNumber]);
 
-  const handleRepeat = () => {
+  const handleRepeat = useCallback(() => {
     speakNumber(currentNumber);
-  };
+  }, [currentNumber, speakNumber]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -84,7 +86,7 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
         <View style={styles.header}>
           <Text style={styles.title}>Chiffres</Text>
           <Text style={styles.subtitle}>
-            Chiffre {currentNumber} sur {maxNumber}
+            Chiffre {currentNumber} sur {MAX_NUMBER}
           </Text>
         </View>
 
@@ -101,8 +103,16 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
         {/* Représentation visuelle */}
         <View style={styles.visualContainer}>
           <Text style={styles.visualLabel}>
-            {Array(currentNumber).fill('●').join(' ')}
+            {currentNumber <= 20 
+              ? Array(currentNumber).fill('●').join(' ')
+              : `${currentNumber} objets`
+            }
           </Text>
+          {currentNumber > 20 && currentNumber % 10 === 0 && (
+            <Text style={styles.visualSubLabel}>
+              {Array(10).fill('●').join(' ')} x {Math.floor(currentNumber / 10)}
+          </Text>
+          )}
         </View>
 
         <View style={styles.controls}>
@@ -125,12 +135,12 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.controlButton, currentNumber === maxNumber && styles.controlButtonDisabled]}
+            style={[styles.controlButton, currentNumber === MAX_NUMBER && styles.controlButtonDisabled]}
             onPress={handleNext}
-            disabled={currentNumber === maxNumber}
+            disabled={currentNumber === MAX_NUMBER}
           >
             <Text style={styles.controlButtonText}>
-              {currentNumber === maxNumber ? 'Terminer ✓' : 'Suivant →'}
+              {currentNumber === MAX_NUMBER ? 'Terminer ✓' : 'Suivant →'}
             </Text>
           </TouchableOpacity>
         </View>
@@ -140,12 +150,12 @@ export default function ChiffresModule({ onComplete }: ChiffresModuleProps) {
             <View
               style={[
                 styles.progressFill,
-                { width: `${((currentNumber) / maxNumber) * 100}%` },
+                { width: `${((currentNumber) / MAX_NUMBER) * 100}%` },
               ]}
             />
           </View>
           <Text style={styles.progressText}>
-            {currentNumber} / {maxNumber}
+            {currentNumber} / {MAX_NUMBER}
           </Text>
         </View>
       </ScrollView>
@@ -215,6 +225,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     color: COLORS.primary.green,
     fontWeight: '600',
+  },
+  visualSubLabel: {
+    fontSize: 18,
+    color: COLORS.primary.green,
+    fontWeight: '500',
+    marginTop: 10,
   },
   controls: {
     flexDirection: 'row',

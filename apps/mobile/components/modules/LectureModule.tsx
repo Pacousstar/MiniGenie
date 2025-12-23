@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -22,16 +22,61 @@ interface ReadingItem {
 }
 
 const READING_ITEMS: ReadingItem[] = [
+  // Mots simples (niveau débutant)
   { text: 'Papa', level: 'simple', category: 'Mots simples' },
   { text: 'Maman', level: 'simple', category: 'Mots simples' },
   { text: 'Chat', level: 'simple', category: 'Mots simples' },
   { text: 'Chien', level: 'simple', category: 'Mots simples' },
   { text: 'Maison', level: 'simple', category: 'Mots simples' },
   { text: 'École', level: 'simple', category: 'Mots simples' },
+  { text: 'Livre', level: 'simple', category: 'Mots simples' },
+  { text: 'Crayon', level: 'simple', category: 'Mots simples' },
+  { text: 'Table', level: 'simple', category: 'Mots simples' },
+  { text: 'Chaise', level: 'simple', category: 'Mots simples' },
+  { text: 'Voiture', level: 'simple', category: 'Mots simples' },
+  { text: 'Ballon', level: 'simple', category: 'Mots simples' },
+  { text: 'Fleur', level: 'simple', category: 'Mots simples' },
+  { text: 'Arbre', level: 'simple', category: 'Mots simples' },
+  { text: 'Soleil', level: 'simple', category: 'Mots simples' },
+  { text: 'Lune', level: 'simple', category: 'Mots simples' },
+  { text: 'Eau', level: 'simple', category: 'Mots simples' },
+  { text: 'Pain', level: 'simple', category: 'Mots simples' },
+  { text: 'Lait', level: 'simple', category: 'Mots simples' },
+  { text: 'Œuf', level: 'simple', category: 'Mots simples' },
+  
+  // Phrases courtes (niveau moyen)
   { text: 'Papa aime maman', level: 'moyen', category: 'Phrases courtes' },
   { text: 'Le chat est noir', level: 'moyen', category: 'Phrases courtes' },
   { text: 'Je vais à l\'école', level: 'moyen', category: 'Phrases courtes' },
   { text: 'Maman fait la cuisine', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Le chien joue', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je lis un livre', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Il fait beau', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je mange une pomme', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Le soleil brille', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je dessine un arbre', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Maman lit une histoire', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Le chat dort', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je joue avec mon ballon', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Papa va au travail', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je compte jusqu\'à dix', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'La fleur est belle', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je bois de l\'eau', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Le livre est sur la table', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Je saute très haut', level: 'moyen', category: 'Phrases courtes' },
+  { text: 'Maman prépare le repas', level: 'moyen', category: 'Phrases courtes' },
+  
+  // Phrases plus longues (niveau avancé)
+  { text: 'Je vais à l\'école avec mon sac', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Le chat noir joue dans le jardin', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Maman et papa m\'aiment beaucoup', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Je dessine un beau soleil jaune', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Le chien court après le ballon rouge', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Je lis une histoire avant de dormir', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Papa m\'aide à faire mes devoirs', level: 'moyen', category: 'Phrases longues' },
+  { text: 'La fleur pousse dans le jardin', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Je compte les pommes dans le panier', level: 'moyen', category: 'Phrases longues' },
+  { text: 'Maman cuisine un bon repas pour nous', level: 'moyen', category: 'Phrases longues' },
 ];
 
 /**
@@ -40,10 +85,10 @@ const READING_ITEMS: ReadingItem[] = [
 export default function LectureModule({ onComplete }: LectureModuleProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [fadeAnim] = useState(new Animated.Value(1));
+  const fadeAnim = useRef(new Animated.Value(1)).current;
   const [showAnswer, setShowAnswer] = useState(false);
 
-  const currentItem = READING_ITEMS[currentIndex];
+  const currentItem = useMemo(() => READING_ITEMS[currentIndex], [currentIndex]);
 
   useEffect(() => {
     setShowAnswer(false);
@@ -64,12 +109,12 @@ export default function LectureModule({ onComplete }: LectureModuleProps) {
     }
   };
 
-  const handleShowAnswer = () => {
+  const handleShowAnswer = useCallback(() => {
     setShowAnswer(true);
     speakText(currentItem.text);
-  };
+  }, [currentItem, speakText]);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentIndex < READING_ITEMS.length - 1) {
       Animated.sequence([
         Animated.timing(fadeAnim, {
@@ -84,24 +129,26 @@ export default function LectureModule({ onComplete }: LectureModuleProps) {
         }),
       ]).start();
       
-      setCurrentIndex(currentIndex + 1);
+      setCurrentIndex(prev => prev + 1);
     } else {
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => {
+        console.warn('Erreur TTS encouragement:', err);
+      });
       if (onComplete) {
         setTimeout(() => onComplete(), 2000);
       }
     }
-  };
+  }, [currentIndex, fadeAnim, onComplete]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+      setCurrentIndex(prev => prev - 1);
     }
-  };
+  }, [currentIndex]);
 
-  const handleRepeat = () => {
+  const handleRepeat = useCallback(() => {
     speakText(currentItem.text);
-  };
+  }, [currentItem, speakText]);
 
   return (
     <SafeAreaView style={styles.container}>

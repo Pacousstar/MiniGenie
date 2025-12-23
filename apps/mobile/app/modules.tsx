@@ -67,7 +67,7 @@ export default function ModuleScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      router.back();
+    router.back();
     });
   };
 
@@ -126,7 +126,7 @@ export default function ModuleScreen() {
           },
         ]}
       >
-        {renderModule()}
+      {renderModule()}
       </Animated.View>
     </SafeAreaView>
   );

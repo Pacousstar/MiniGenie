@@ -1,0 +1,52 @@
+# ============================================
+# Configuration Backend MiniGénie
+# Copiez ce fichier vers .env et remplissez les valeurs
+# ============================================
+
+# Port du serveur
+PORT=3001
+
+# ============================================
+# Supabase Configuration
+# ============================================
+# Récupérez ces valeurs depuis Supabase Dashboard > Settings > API
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# ============================================
+# CORS Configuration
+# ============================================
+# Origines autorisées (séparées par des virgules)
+CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+
+# ============================================
+# Environment
+# ============================================
+NODE_ENV=development
+
+# ============================================
+# API Keys (Optionnel - pour l'IA Assena)
+# ============================================
+# Au moins une clé API est requise pour activer l'IA
+# Si aucune clé n'est fournie, le mode fallback (réponses pré-définies) sera utilisé
+
+# DeepSeek (Recommandé - moins cher)
+# DEEPSEEK_API_KEY=your_deepseek_api_key
+# DEEPSEEK_MODEL=deepseek-chat (par défaut)
+
+# OpenAI (Alternative)
+# OPENAI_API_KEY=your_openai_api_key
+# OPENAI_MODEL=gpt-3.5-turbo (par défaut)
+
+# Configuration IA (optionnel)
+# AI_MAX_TOKENS=150 (par défaut)
+# AI_TEMPERATURE=0.7 (par défaut, 0.0-2.0)
+
+# ============================================
+# ⚠️ SÉCURITÉ
+# ============================================
+# - Ne jamais commiter ce fichier avec des valeurs réelles
+# - Utilisez des variables d'environnement en production
+# - Changez régulièrement les clés API
+# - Ne partagez jamais les clés publiquement

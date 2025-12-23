@@ -9,18 +9,18 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@minigenie/shared": "*",
     "next": "14.0.4",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "@minigenie/shared": "*"
+    "recharts": "^3.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.15",
-    "typescript": "^5.3.3",
     "eslint": "^8.55.0",
-    "eslint-config-next": "14.0.4"
+    "eslint-config-next": "14.0.4",
+    "typescript": "^5.3.3"
   }
 }
-

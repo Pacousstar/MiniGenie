@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -40,13 +40,17 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
   const [newBadge, setNewBadge] = useState<any>(null);
   const [showBadgeCelebration, setShowBadgeCelebration] = useState(false);
   const [childId, setChildId] = useState<string | null>(null);
+  const problemAnim = useRef(new Animated.Value(0)).current;
+  const correctAnim = useRef(new Animated.Value(0)).current;
+  const incorrectAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Initialiser la session
+    let isMounted = true;
+    
     const initSession = async () => {
       try {
         const profile = await getChildProfile();
-        if (profile) {
+        if (profile && isMounted) {
           setChildId(profile.id);
           await sessionService.startSession(profile.id, 'calcul', 'calcul');
         }
@@ -58,15 +62,17 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
     initSession();
     generateProblem();
     
-    // Nettoyer la session à la fin
     return () => {
+      isMounted = false;
       if (childId) {
-        sessionService.endSession().catch(console.error);
+        sessionService.endSession().catch((err) => {
+          console.warn('Erreur lors de la fermeture de la session:', err);
+        });
       }
     };
   }, []);
 
-  const generateProblem = () => {
+  const generateProblem = useCallback(() => {
     // Réinitialiser les animations
     problemAnim.setValue(0);
     correctAnim.setValue(0);
@@ -97,7 +103,7 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
       if (num1 > num2) {
         answer = num1;
         question = `Quel nombre est plus grand : ${num1} ou ${num2} ?`;
-      } else {
+    } else {
         answer = num2;
         question = `Quel nombre est plus grand : ${num1} ou ${num2} ?`;
       }
@@ -129,63 +135,84 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
     }).start();
     
     // Prononcer la question
-    speakAsAssena(question).catch(console.error);
-  };
+    speakAsAssena(question).catch((err) => {
+      console.warn('Erreur lors de la prononciation:', err);
+    });
+  }, [problemAnim]);
 
-  const handleAnswerSelect = async (option: number) => {
-    if (selectedAnswer !== null) return; // Déjà répondu
+  const handleAnswerSelect = useCallback(async (option: number) => {
+    if (selectedAnswer !== null || !currentProblem) return; // Déjà répondu ou pas de problème
     
     setSelectedAnswer(option);
-    const correct = option === currentProblem?.answer;
+    const correct = option === currentProblem.answer;
     setIsCorrect(correct);
-    setAttempts(attempts + 1);
+    setAttempts(prev => prev + 1);
 
     if (correct) {
       // Son de succès
-      soundService.playSuccess().catch(console.error);
+      soundService.playSuccess().catch((err) => console.warn('Erreur son succès:', err));
       
-      const newScore = score + 1;
-      setScore(newScore);
-      speakAsAssena(ASSENA_MESSAGES.encouragement[Math.floor(Math.random() * ASSENA_MESSAGES.encouragement.length)]).catch(console.error);
-      
-      // Vérifier les badges
-      const unlockedBadges = badgeService.checkAndUnlockBadges('calcul', newScore);
-      if (unlockedBadges.length > 0) {
-        setNewBadge(unlockedBadges[0]);
-        setShowBadgeCelebration(true);
-        // Son de badge
-        soundService.playBadge().catch(console.error);
-      }
-      
-      // Nouveau problème après 2 secondes
-      setTimeout(async () => {
-        if (attempts < 9) {
-          generateProblem();
-        } else {
-          // Module terminé
-          const finalScore = Math.round((newScore / (attempts + 1)) * 100);
-          speakAsAssena(`Bravo ! Tu as répondu correctement à ${newScore} questions sur ${attempts + 1} !`).catch(console.error);
-          
-          // Mettre à jour la progression
-          if (childId) {
-            await progressService.updateModuleProgress(childId, 'calcul', finalScore, true);
-            await sessionService.endSession(finalScore, true);
+      setScore(prev => {
+        const newScore = prev + 1;
+        
+        // Message d'encouragement
+        const encouragementMsg = ASSENA_MESSAGES.encouragement[Math.floor(Math.random() * ASSENA_MESSAGES.encouragement.length)];
+        speakAsAssena(encouragementMsg).catch((err) => console.warn('Erreur TTS encouragement:', err));
+        
+        // Vérifier les badges
+        try {
+          const unlockedBadges = badgeService.checkAndUnlockBadges('calcul', newScore);
+          if (unlockedBadges.length > 0) {
+            setNewBadge(unlockedBadges[0]);
+            setShowBadgeCelebration(true);
+            soundService.playBadge().catch((err) => console.warn('Erreur son badge:', err));
           }
-          
-          if (onComplete) {
-            setTimeout(() => onComplete(), 3000);
-          }
+        } catch (error) {
+          console.error('Erreur lors de la vérification des badges:', error);
         }
-      }, 2000);
+        
+        // Nouveau problème après 2 secondes
+        setTimeout(async () => {
+          const currentAttempts = attempts + 1;
+          if (currentAttempts < 9) {
+            generateProblem();
+          } else {
+            // Module terminé
+            const finalScore = Math.round((newScore / (currentAttempts + 1)) * 100);
+            try {
+              await speakAsAssena(`Bravo ! Tu as répondu correctement à ${newScore} questions sur ${currentAttempts + 1} !`);
+            } catch (err) {
+              console.warn('Erreur TTS fin:', err);
+            }
+            
+            // Mettre à jour la progression
+            if (childId) {
+              try {
+                await progressService.updateModuleProgress(childId, 'calcul', finalScore, true);
+                await sessionService.endSession(finalScore, true);
+              } catch (error) {
+                console.error('Erreur lors de la mise à jour de la progression:', error);
+              }
+            }
+            
+            if (onComplete) {
+              setTimeout(() => onComplete(), 3000);
+            }
+          }
+        }, 2000);
+        
+        return newScore;
+      });
     } else {
       // Son d'erreur (doux et encourageant)
-      soundService.playError().catch(console.error);
+      soundService.playError().catch((err) => console.warn('Erreur son erreur:', err));
       
-      speakAsAssena(ASSENA_MESSAGES.correction[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.correction[0]).catch((err) => console.warn('Erreur TTS correction:', err));
       
       // Nouveau problème après 2 secondes
       setTimeout(() => {
-        if (attempts < 9) {
+        const currentAttempts = attempts + 1;
+        if (currentAttempts < 9) {
           generateProblem();
         } else {
           if (onComplete) {
@@ -194,7 +221,7 @@ export default function CalculModule({ onComplete }: CalculModuleProps) {
         }
       }, 2000);
     }
-  };
+  }, [selectedAnswer, currentProblem, attempts, score, childId, onComplete, generateProblem]);
 
   if (!currentProblem) {
     return (

@@ -1,102 +1,100 @@
 # 🎓 MiniGénie
 
-Application éducative intelligente pour enfants de 3 à 8 ans, avec la mascotte Assena.
+L'application éducative intelligente pour les enfants de 3 à 8 ans — fun, intelligente et 100% interactive.
 
-## 🚀 État du Développement
+## 🎯 À Propos
 
-### ✅ Fonctionnalités Implémentées
+MiniGénie est une application éducative complète avec :
+- **8 modules pédagogiques** : Alphabet, Chiffres, Syllabes, Lecture, Écriture, Calcul, Vocabulaire, Famille
+- **Mascotte IA Assena** : Bienveillante, patiente, joyeuse et encourageante
+- **Système de badges** : Gamification pour motiver les enfants
+- **Dashboard parent** : Suivi de la progression en temps réel
+- **Mode offline-first** : Fonctionne sans internet
 
-- **Structure Monorepo** : Organisation claire avec apps et packages
-- **Splash Screen** : Écran d'accueil animé
-- **Profil Enfant** : Création et gestion du profil (pseudo, âge, niveau)
-- **Écran d'Accueil** : Interface avec Assena et sélection de modules
-- **Module Alphabet** : Apprentissage des lettres A-Z avec TTS
-- **Système TTS** : Synthèse vocale avec voix enfantine
-- **Stockage Local** : Système offline-first avec AsyncStorage/localStorage
-- **Dashboard Web** : Interface parent (Next.js)
+## 🏗️ Architecture
 
-### 🚧 En Cours
-
-- Système STT (Speech To Text)
-- Synchronisation Supabase
-- Autres modules pédagogiques
-
-### 📋 À Faire
-
-- Module Écriture (tracé tactile)
-- Module Chiffres
-- Module Calcul
-- Module Vocabulaire
-- Module Famille
-- Gamification (badges, récompenses)
-- Animations Assena
-
-## 🏗️ Structure du Projet
-
+### Monorepo Structure
 ```
 MiniGenie/
 ├── apps/
 │   ├── mobile/          # Application Expo/React Native
 │   └── web/             # Dashboard Next.js
+├── backend/             # API Node.js (à venir)
 ├── packages/
-│   ├── shared/          # Code partagé (types, constantes, utils)
-│   ├── ai/              # Logique IA
-│   ├── offline/         # Gestion offline
-│   └── database/        # Schémas Supabase
-└── assets/              # Images, audio, fonts
+│   ├── shared/          # Code partagé
+│   ├── ai/              # Service IA
+│   └── offline/         # Synchronisation offline
+└── docs/                # Documentation
 ```
 
-## 🛠️ Technologies
+## 🚀 Technologies
 
-- **Mobile** : Expo ~50.0.0, React Native 0.73.0
-- **Web** : Next.js 14.0.4
-- **Langage** : TypeScript
-- **Stockage** : AsyncStorage (mobile), localStorage (web)
-- **Audio** : expo-speech (TTS)
+- **Mobile** : Expo SDK 50, React Native 0.73.6, Expo Router 3.4
+- **Web** : Next.js 14, React 18.2.0
+- **Backend** : Node.js (à venir)
+- **Base de données** : Supabase (à configurer)
+- **IA** : DeepSeek/GPT (à intégrer)
 
-## 🚀 Démarrage
+## 📱 Installation
 
-### Mobile
+### Prérequis
+- Node.js >= 18.0.0
+- npm >= 9.0.0
+- Expo CLI
 
+### Installation
 ```bash
+# Installer les dépendances
+npm install
+
+# Lancer l'application mobile
 cd apps/mobile
-npm install
 npm start
-```
 
-### Web
-
-```bash
+# Lancer le dashboard web
 cd apps/web
-npm install
 npm run dev
 ```
 
-Le dashboard sera accessible sur http://localhost:3000
+## 🎯 Fonctionnalités
 
-## 📱 Modules Disponibles
+### ✅ Complétées
+- ✅ 8 modules pédagogiques fonctionnels
+- ✅ Système de badges et gamification
+- ✅ Gestion des sessions et progression
+- ✅ Dashboard parent avec statistiques
+- ✅ Stockage offline
+- ✅ Animations Assena
 
-1. **Alphabet** ✅ - Apprendre les lettres A-Z
-2. **Syllabes** 🚧 - Sons et syllabes
-3. **Lecture** 🚧 - Mots et phrases
-4. **Écriture** 🚧 - Tracé tactile
-5. **Chiffres** 🚧 - Comptage 1-100
-6. **Calcul** 🚧 - Additions/soustractions
-7. **Vocabulaire** 🚧 - Couleurs, animaux, etc.
-8. **Famille** 🚧 - Membres de la famille
+### ⏳ En Développement
+- ⏳ Backend API complet
+- ⏳ Intégration Supabase
+- ⏳ Intégration IA pour Assena
+- ⏳ Synchronisation offline/online
 
-## 🎨 Design
+## 👥 Équipe de Développement
 
-- **Couleurs** : Orange (#FF6B35), Vert (#4ECDC4), Blanc, Bleu, Rouge
-- **Mascotte** : Assena (bienveillante, patiente, joyeuse)
-- **Style** : Moderne, coloré, adapté aux enfants
+- **Agent Principal** : Coordination, architecture, intégration
+- **Agent 3** : Développement mobile & modules pédagogiques
+- **Agent 4** : Backend, dashboard & intégrations
 
-## 📝 Notes
+## 📚 Documentation
 
-- Application **offline-first** : fonctionne sans internet
-- **TTS activé** : Assena parle avec une voix enfantine
-- **Stockage local** : Toutes les données sont sauvegardées localement
+- `docs/README.md` - Documentation technique complète
+- `specs/README.md` - Spécifications détaillées
+- `rules/README.md` - Règles de développement
+- `PLAN_REPARTITION_AGENTS.md` - Plan de répartition des tâches
+
+## 🔗 Liens
+
+- **GitHub** : https://github.com/Pacousstar/MiniGenie
+- **Dashboard Web** : http://localhost:3000
+- **Application Mobile** : http://localhost:8081
+
+## 📄 Licence
+
+Propriétaire - Tous droits réservés
 
 ---
 
-Développé avec ❤️ pour les enfants d'Afrique francophone
+*Développé avec ❤️ pour les enfants de 3 à 8 ans*

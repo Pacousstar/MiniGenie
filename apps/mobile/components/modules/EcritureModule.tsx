@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -27,15 +27,63 @@ interface LetterTemplate {
   paths: string[]; // Chemins SVG pour guider le tracé
 }
 
+// Templates pour toutes les lettres majuscules et minuscules
 const LETTER_TEMPLATES: LetterTemplate[] = [
+  // MAJUSCULES A-Z
   { letter: 'A', paths: ['M 50 150 L 50 50 L 100 50 L 100 150', 'M 50 100 L 100 100'] },
   { letter: 'B', paths: ['M 50 50 L 50 150', 'M 50 50 Q 75 50 75 75', 'M 50 100 Q 75 100 75 125', 'M 50 150 Q 75 150 75 125'] },
   { letter: 'C', paths: ['M 100 50 Q 50 50 50 100 Q 50 150 100 150'] },
   { letter: 'D', paths: ['M 50 50 L 50 150', 'M 50 50 L 75 50 Q 100 50 100 100 Q 100 150 75 150 L 50 150'] },
   { letter: 'E', paths: ['M 50 50 L 50 150', 'M 50 50 L 100 50', 'M 50 100 L 90 100', 'M 50 150 L 100 150'] },
-  { letter: 'a', paths: ['M 75 100 Q 50 100 50 125 Q 50 150 75 150', 'M 50 125 L 100 125'] },
+  { letter: 'F', paths: ['M 50 50 L 50 150', 'M 50 50 L 100 50', 'M 50 100 L 90 100'] },
+  { letter: 'G', paths: ['M 100 50 Q 50 50 50 100 Q 50 150 100 150', 'M 75 100 L 100 100'] },
+  { letter: 'H', paths: ['M 50 50 L 50 150', 'M 100 50 L 100 150', 'M 50 100 L 100 100'] },
+  { letter: 'I', paths: ['M 75 50 L 75 150'] },
+  { letter: 'J', paths: ['M 100 50 L 100 150 Q 100 150 75 150 L 50 150'] },
+  { letter: 'K', paths: ['M 50 50 L 50 150', 'M 50 100 L 100 50', 'M 50 100 L 100 150'] },
+  { letter: 'L', paths: ['M 50 50 L 50 150 L 100 150'] },
+  { letter: 'M', paths: ['M 50 150 L 50 50 L 75 100 L 100 50 L 100 150'] },
+  { letter: 'N', paths: ['M 50 50 L 50 150', 'M 50 50 L 100 150', 'M 100 50 L 100 150'] },
+  { letter: 'O', paths: ['M 75 50 Q 50 50 50 75 Q 50 100 75 100 Q 100 100 100 75 Q 100 50 75 50', 'M 75 100 Q 50 100 50 125 Q 50 150 75 150 Q 100 150 100 125 Q 100 100 75 100'] },
+  { letter: 'P', paths: ['M 50 50 L 50 150', 'M 50 50 Q 75 50 75 75 Q 75 100 50 100'] },
+  { letter: 'Q', paths: ['M 75 50 Q 50 50 50 75 Q 50 100 75 100 Q 100 100 100 75 Q 100 50 75 50', 'M 75 100 Q 50 100 50 125 Q 50 150 75 150 Q 100 150 100 125', 'M 85 140 L 100 155'] },
+  { letter: 'R', paths: ['M 50 50 L 50 150', 'M 50 50 Q 75 50 75 75 Q 75 100 50 100', 'M 50 100 L 100 150'] },
+  { letter: 'S', paths: ['M 100 50 Q 50 50 50 75 Q 50 100 100 100 Q 50 100 50 125 Q 50 150 100 150'] },
+  { letter: 'T', paths: ['M 75 50 L 75 150', 'M 50 50 L 100 50'] },
+  { letter: 'U', paths: ['M 50 50 L 50 125 Q 50 150 75 150 Q 100 150 100 125 L 100 50'] },
+  { letter: 'V', paths: ['M 50 50 L 75 150 L 100 50'] },
+  { letter: 'W', paths: ['M 50 50 L 50 150', 'M 50 50 L 75 100 L 100 50', 'M 100 50 L 100 150'] },
+  { letter: 'X', paths: ['M 50 50 L 100 150', 'M 100 50 L 50 150'] },
+  { letter: 'Y', paths: ['M 50 50 L 75 100 L 100 50', 'M 75 100 L 75 150'] },
+  { letter: 'Z', paths: ['M 50 50 L 100 50', 'M 100 50 L 50 150', 'M 50 150 L 100 150'] },
+  
+  // MINUSCULES a-z
+  { letter: 'a', paths: ['M 75 100 Q 50 100 50 125 Q 50 150 75 150 Q 100 150 100 125', 'M 50 125 L 100 125'] },
   { letter: 'b', paths: ['M 50 50 L 50 150', 'M 50 100 Q 75 100 75 125 Q 75 150 50 150'] },
   { letter: 'c', paths: ['M 100 100 Q 50 100 50 125 Q 50 150 100 150'] },
+  { letter: 'd', paths: ['M 100 50 L 100 150', 'M 100 100 Q 75 100 75 125 Q 75 150 100 150'] },
+  { letter: 'e', paths: ['M 50 125 L 100 125', 'M 100 125 Q 50 125 50 100 Q 50 75 100 75'] },
+  { letter: 'f', paths: ['M 75 50 L 75 150', 'M 50 75 L 100 75', 'M 50 100 Q 75 100 75 125'] },
+  { letter: 'g', paths: ['M 75 100 Q 50 100 50 125 Q 50 150 75 150 Q 100 150 100 125', 'M 50 125 L 100 125', 'M 100 150 L 100 175'] },
+  { letter: 'h', paths: ['M 50 50 L 50 150', 'M 50 100 Q 75 100 75 125 Q 75 150 100 150', 'M 100 50 L 100 100'] },
+  { letter: 'i', paths: ['M 75 50 L 75 125', 'M 75 150'] },
+  { letter: 'j', paths: ['M 100 50 L 100 125 Q 100 150 75 150', 'M 75 150'] },
+  { letter: 'k', paths: ['M 50 50 L 50 150', 'M 50 100 L 75 75 L 100 50', 'M 50 100 L 75 125 L 100 150'] },
+  { letter: 'l', paths: ['M 75 50 L 75 150'] },
+  { letter: 'm', paths: ['M 50 150 L 50 100 Q 50 75 75 75 Q 100 75 100 100 L 100 150'] },
+  { letter: 'n', paths: ['M 50 150 L 50 100 Q 50 75 75 75 Q 100 75 100 100 L 100 150'] },
+  { letter: 'o', paths: ['M 75 75 Q 50 75 50 100 Q 50 125 75 125 Q 100 125 100 100 Q 100 75 75 75'] },
+  { letter: 'p', paths: ['M 50 150 L 50 75 Q 50 50 75 50 Q 100 50 100 75'] },
+  { letter: 'q', paths: ['M 100 150 L 100 75 Q 100 50 75 50 Q 50 50 50 75'] },
+  { letter: 'r', paths: ['M 50 150 L 50 100 Q 50 75 75 75'] },
+  { letter: 's', paths: ['M 100 75 Q 50 75 50 100 Q 50 125 100 125'] },
+  { letter: 't', paths: ['M 75 50 L 75 150', 'M 50 75 L 100 75'] },
+  { letter: 'u', paths: ['M 50 75 Q 50 100 75 100 Q 100 100 100 75 L 100 150'] },
+  { letter: 'v', paths: ['M 50 75 L 75 150 L 100 75'] },
+  { letter: 'w', paths: ['M 50 75 L 50 150', 'M 50 75 L 75 100 L 100 75', 'M 100 75 L 100 150'] },
+  { letter: 'x', paths: ['M 50 75 L 100 150', 'M 100 75 L 50 150'] },
+  { letter: 'y', paths: ['M 50 75 L 75 125 L 100 75', 'M 75 125 L 75 150'] },
+  { letter: 'z', paths: ['M 50 75 L 100 75', 'M 100 75 L 50 150', 'M 50 150 L 100 150'] },
 ];
 
 /**
@@ -53,7 +101,10 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
   const feedbackAnim = useRef(new Animated.Value(0)).current;
   const letterAppearAnim = useRef(new Animated.Value(0)).current;
 
-  const currentTemplate = LETTER_TEMPLATES[currentLetterIndex] || LETTER_TEMPLATES[0];
+  const currentTemplate = useMemo(
+    () => LETTER_TEMPLATES[currentLetterIndex] || LETTER_TEMPLATES[0],
+    [currentLetterIndex]
+  );
 
   // Animation du guide qui pulse
   React.useEffect(() => {
@@ -110,13 +161,13 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
     })
   ).current;
 
-  const validateDrawing = () => {
+  const validateDrawing = useCallback(() => {
     // Validation simplifiée : vérifier si le tracé est proche du template
     // Dans une vraie implémentation, on utiliserait une reconnaissance de forme
     if (drawingPath.length > 10) {
       setFeedback('Bien ! Continue comme ça !');
       // Son d'encouragement
-      soundService.playEncouragement().catch(console.error);
+      soundService.playEncouragement().catch((err) => console.warn('Erreur son encouragement:', err));
       
       // Animation de feedback positif
       Animated.sequence([
@@ -132,11 +183,11 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
           useNativeDriver: true,
         }),
       ]).start();
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => console.warn('Erreur TTS encouragement:', err));
     } else {
       setFeedback('Essaie de tracer toute la lettre !');
       // Son d'erreur doux
-      soundService.playError().catch(console.error);
+      soundService.playError().catch((err) => console.warn('Erreur son erreur:', err));
       
       // Animation de feedback d'encouragement
       Animated.sequence([
@@ -152,40 +203,45 @@ export default function EcritureModule({ onComplete }: EcritureModuleProps) {
           useNativeDriver: true,
         }),
       ]).start();
-      speakAsAssena(ASSENA_MESSAGES.correction[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.correction[0]).catch((err) => console.warn('Erreur TTS correction:', err));
     }
-  };
+  }, [drawingPath, feedbackAnim]);
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setDrawingPath([]);
     setFeedback(null);
-  };
+  }, []);
 
-  const handleNext = () => {
+  const handleNext = useCallback(() => {
     if (currentLetterIndex < LETTER_TEMPLATES.length - 1) {
-      setCurrentLetterIndex(currentLetterIndex + 1);
+      const nextIndex = currentLetterIndex + 1;
+      setCurrentLetterIndex(nextIndex);
       setDrawingPath([]);
       setFeedback(null);
-      speakAsAssena(`Trace maintenant la lettre ${LETTER_TEMPLATES[currentLetterIndex + 1].letter}`).catch(console.error);
+      speakAsAssena(`Trace maintenant la lettre ${LETTER_TEMPLATES[nextIndex].letter}`).catch((err) => {
+        console.warn('Erreur TTS next:', err);
+      });
     } else {
-      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch(console.error);
+      speakAsAssena(ASSENA_MESSAGES.encouragement[0]).catch((err) => {
+        console.warn('Erreur TTS encouragement:', err);
+      });
       if (onComplete) {
         setTimeout(() => onComplete(), 2000);
       }
     }
-  };
+  }, [currentLetterIndex, onComplete]);
 
-  const handlePrevious = () => {
+  const handlePrevious = useCallback(() => {
     if (currentLetterIndex > 0) {
       setCurrentLetterIndex(currentLetterIndex - 1);
       setDrawingPath([]);
       setFeedback(null);
     }
-  };
+  }, [currentLetterIndex]);
 
-  const handleToggleGuide = () => {
-    setShowGuide(!showGuide);
-  };
+  const handleToggleGuide = useCallback(() => {
+    setShowGuide(prev => !prev);
+  }, []);
 
 
   return (

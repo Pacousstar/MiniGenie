@@ -59,26 +59,33 @@ apps/mobile/
 
 2. **Modifier SoundService.ts** pour charger les fichiers :
 
+Dans `apps/mobile/services/SoundService.ts`, trouver la méthode `playAudioFile()` et **décommenter le bloc switch** :
+
 ```typescript
-private async playTone(frequency: number, duration: number = 200) {
-  try {
-    // Charger le fichier audio correspondant
-    const soundFile = require('../../assets/sounds/success.mp3');
-    const { sound } = await Audio.Sound.createAsync(
-      soundFile,
-      { shouldPlay: true, volume: this.volume }
-    );
-    
-    sound.setOnPlaybackStatusUpdate((status) => {
-      if (status.isLoaded && status.didJustFinish) {
-        sound.unloadAsync().catch(() => {});
-      }
-    });
-  } catch (error) {
-    console.warn('Impossible de jouer le son:', error);
-  }
+// Décommenter ce bloc une fois les fichiers ajoutés :
+switch (filename) {
+  case 'success.mp3':
+    soundFile = require('../../assets/sounds/success.mp3');
+    break;
+  case 'error.mp3':
+    soundFile = require('../../assets/sounds/error.mp3');
+    break;
+  case 'badge.mp3':
+    soundFile = require('../../assets/sounds/badge.mp3');
+    break;
+  case 'celebration.mp3':
+    soundFile = require('../../assets/sounds/celebration.mp3');
+    break;
+  case 'click.mp3':
+    soundFile = require('../../assets/sounds/click.mp3');
+    break;
+  case 'encouragement.mp3':
+    soundFile = require('../../assets/sounds/encouragement.mp3');
+    break;
 }
 ```
+
+**Important** : React Native nécessite des `require()` statiques (pas de variables dynamiques dans le chemin).
 
 3. **Recommandations pour les fichiers audio** :
    - Format : MP3 ou WAV

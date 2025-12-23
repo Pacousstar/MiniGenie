@@ -1,0 +1,20 @@
+.chartContainer {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.chartTitle {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #212121;
+  margin-bottom: 1.5rem;
+}
+
+.emptyMessage {
+  text-align: center;
+  color: #616161;
+  padding: 2rem;
+}

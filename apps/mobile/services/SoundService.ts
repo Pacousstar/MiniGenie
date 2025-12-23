@@ -38,10 +38,9 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son de succès : séquence de deux tons montants (Do-Mi)
-      await this.playToneSequence([523.25, 659.25], [150, 200]);
+      await this.playAudioFile('success.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son de succès:', error);
+      console.warn('Son de succès non disponible:', error);
     }
   }
 
@@ -53,10 +52,9 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son d'erreur : ton descendant doux (Mi-Do)
-      await this.playToneSequence([659.25, 523.25], [200]);
+      await this.playAudioFile('error.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son d\'erreur:', error);
+      console.warn('Son d\'erreur non disponible:', error);
     }
   }
 
@@ -68,10 +66,9 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son de badge : séquence montante joyeuse (Do-Mi-Sol-Do aigu)
-      await this.playToneSequence([523.25, 659.25, 783.99, 1046.50], [100, 100, 100, 200]);
+      await this.playAudioFile('badge.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son de badge:', error);
+      console.warn('Son de badge non disponible:', error);
     }
   }
 
@@ -83,13 +80,9 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son de célébration : fanfare (Do-Mi-Sol-Do-Mi-Sol)
-      await this.playToneSequence(
-        [523.25, 659.25, 783.99, 1046.50, 1318.51, 1567.98],
-        [80, 80, 80, 80, 80, 300]
-      );
+      await this.playAudioFile('celebration.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son de célébration:', error);
+      console.warn('Son de célébration non disponible:', error);
     }
   }
 
@@ -101,10 +94,9 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son de clic : ton très court et discret
-      await this.playToneSequence([800], [50]);
+      await this.playAudioFile('click.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son de clic:', error);
+      console.warn('Son de clic non disponible:', error);
     }
   }
 
@@ -116,57 +108,73 @@ class SoundService {
     await this.initialize();
     
     try {
-      // Son d'encouragement : séquence positive (Do-Mi-Sol)
-      await this.playToneSequence([523.25, 659.25, 783.99], [150, 150, 250]);
+      await this.playAudioFile('encouragement.wav');
     } catch (error) {
-      console.warn('Impossible de jouer le son d\'encouragement:', error);
+      console.warn('Son d\'encouragement non disponible:', error);
     }
   }
 
+
   /**
-   * Joue une séquence de tons
+   * Charge et joue un fichier audio
+   * Note: Les fichiers doivent être ajoutés dans apps/mobile/assets/sounds/
+   * et importés ici avec require() statique
    */
-  private async playToneSequence(frequencies: number[], durations: number[]) {
-    for (let i = 0; i < frequencies.length; i++) {
-      const frequency = frequencies[i];
-      const duration = durations[i] || durations[0] || 200;
+  private async playAudioFile(filename: string) {
+    try {
+      // Mapping statique des fichiers audio
+      // Décommenter et ajouter les require() une fois les fichiers ajoutés
+      let soundFile: any = null;
       
-      if (i > 0) {
-        // Petit délai entre les tons
-        await new Promise(resolve => setTimeout(resolve, 20));
+      // Charger les fichiers audio générés (format WAV)
+      switch (filename) {
+        case 'success.mp3':
+        case 'success.wav':
+          soundFile = require('../../assets/sounds/success.wav');
+          break;
+        case 'error.mp3':
+        case 'error.wav':
+          soundFile = require('../../assets/sounds/error.wav');
+          break;
+        case 'badge.mp3':
+        case 'badge.wav':
+          soundFile = require('../../assets/sounds/badge.wav');
+          break;
+        case 'celebration.mp3':
+        case 'celebration.wav':
+          soundFile = require('../../assets/sounds/celebration.wav');
+          break;
+        case 'click.mp3':
+        case 'click.wav':
+          soundFile = require('../../assets/sounds/click.wav');
+          break;
+        case 'encouragement.mp3':
+        case 'encouragement.wav':
+          soundFile = require('../../assets/sounds/encouragement.wav');
+          break;
       }
       
-      await this.playTone(frequency, duration);
+      if (soundFile) {
+        const { sound } = await Audio.Sound.createAsync(
+          soundFile,
+          { shouldPlay: true, volume: this.volume }
+        );
+        
+        sound.setOnPlaybackStatusUpdate((status) => {
+          if (status.isLoaded && status.didJustFinish) {
+            sound.unloadAsync().catch(() => {});
+          }
+        });
+      } else {
+        // Fichiers non encore ajoutés - on continue silencieusement
+        console.log(`Fichier audio ${filename} non configuré - Voir SOUNDS_RECOMMENDATIONS.md`);
+      }
+    } catch (error) {
+      // Fichier non trouvé ou erreur de chargement - on continue silencieusement
+      console.warn(`Erreur lors du chargement de ${filename}:`, error);
     }
   }
 
-  /**
-   * Crée et joue un ton avec une fréquence spécifique
-   * Version simplifiée pour compatibilité maximale
-   */
-  private async playTone(frequency: number, duration: number = 200) {
-    try {
-      // Pour l'instant, on utilise une approche simple
-      // Dans une version future, on pourra ajouter de vrais fichiers audio
-      // Pour l'instant, on génère un son simple avec expo-av
-      
-      // Note: La génération de sons WAV en runtime peut être complexe
-      // Pour une solution de production, il serait préférable d'utiliser
-      // des fichiers audio pré-enregistrés dans assets/sounds/
-      
-      // Version simplifiée : on log pour l'instant
-      // Les sons seront joués via des fichiers audio dans une version future
-      console.log(`Playing tone: ${frequency}Hz for ${duration}ms`);
-      
-      // TODO: Ajouter des fichiers audio dans assets/sounds/ et les charger ici
-      // Exemple:
-      // const soundFile = require('../../assets/sounds/success.mp3');
-      // const { sound } = await Audio.Sound.createAsync(soundFile, { shouldPlay: true });
-    } catch (error) {
-      // Si la génération échoue, on continue silencieusement
-      console.warn('Impossible de générer le ton audio:', error);
-    }
-  }
 
   /**
    * Active ou désactive les sons

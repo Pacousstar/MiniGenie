@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { COLORS, ASSENA_CONFIG } from '@minigenie/shared';
+import { getChildProfile } from '@minigenie/shared/src/utils/storage';
 
 /**
  * Écran Splash Screen animé avec logo MiniGénie
@@ -39,7 +40,6 @@ export default function SplashScreen() {
     // Vérifier si un profil existe
     const checkProfile = async () => {
       try {
-        const { getChildProfile } = await import('@minigenie/shared/src/utils/storage');
         const profile = await getChildProfile();
         
         // Redirection après 2.5 secondes
